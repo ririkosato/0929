@@ -3,42 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>シンプルツムツム風パズル</title>
+    <title>シンプル！モグラたたきゲーム</title>
     <style>
-        /* ゲームのスタイル設定 */
+        /* 全体のスタイル */
         body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #e0f7fa;
+        }
+        /* スコアとメッセージの表示エリア */
+        #status {
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        /* ゲームボードのスタイル */
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px); /* 3x3のマス */
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+            width: 320px;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: #4caf50; /* 草原っぽい色 */
+            border-radius: 10px;
+        }
+        /* モグラ（穴）のスタイル */
+        .hole {
+            width: 100px;
+            height: 100px;
+            background-color: #a1887f; /* 土っぽい色 */
+            border-radius: 50%; /* 円形の穴 */
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-direction: column;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
+            overflow: hidden; /* モグラが飛び出す演出のため */
         }
-        #game-board {
-            display: grid;
-            /* 5x5のマス目を作成 */
-            grid-template-columns: repeat(5, 60px); 
-            grid-template-rows: repeat(5, 60px);
-            gap: 5px;
-            border: 5px solid #333;
-            background-color: #ccc;
-        }
-        .tsum {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%; /* ツムを円形にする */
+        /* モグラ本体のスタイル */
+        .mole {
+            width: 80px;
+            height: 80px;
+            background-color: #ff5722; /* モグラの色 */
+            border-radius: 50%;
             cursor: pointer;
-            transition: background-color 0.2s;
-            border: 2px solid #fff;
-            box-sizing: border-box;
+            transform: translateY(100%); /* 最初は穴の下に隠す */
+            transition: transform 0.2s ease-out; /* 飛び出すアニメーション */
+        }
+        /* モグラが出現している状態 */
+        .mole.up {
+            transform: translateY(0); /* 穴から飛び出させる */
         }
     </style>
 </head>
 <body>
-    <h1>クリックで色が変わるパズル</h1>
+    <h1>モグラたたき！</h1>
+    <div id="status">スコア: 0 | 時間: 30</div>
     <div id="game-board">
         </div>
+    <button onclick="startGame()">ゲームスタート</button>
 
     <script src="game.js"></script>
 </body>
