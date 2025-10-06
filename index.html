@@ -2,67 +2,28 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>シンプル！モグラたたきゲーム</title>
-    <style>
-        /* 全体のスタイル */
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #e0f7fa;
-        }
-        /* スコアとメッセージの表示エリア */
-        #status {
-            margin: 20px 0;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        /* ゲームボードのスタイル */
-        #game-board {
-            display: grid;
-            grid-template-columns: repeat(3, 100px); /* 3x3のマス */
-            grid-template-rows: repeat(3, 100px);
-            gap: 10px;
-            width: 320px;
-            margin: 0 auto;
-            padding: 10px;
-            background-color: #4caf50; /* 草原っぽい色 */
-            border-radius: 10px;
-        }
-        /* モグラ（穴）のスタイル */
-        .hole {
-            width: 100px;
-            height: 100px;
-            background-color: #a1887f; /* 土っぽい色 */
-            border-radius: 50%; /* 円形の穴 */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden; /* モグラが飛び出す演出のため */
-        }
-        /* モグラ本体のスタイル */
-        .mole {
-            width: 80px;
-            height: 80px;
-            background-color: #ff5722; /* モグラの色 */
-            border-radius: 50%;
-            cursor: pointer;
-            transform: translateY(100%); /* 最初は穴の下に隠す */
-            transition: transform 0.2s ease-out; /* 飛び出すアニメーション */
-        }
-        /* モグラが出現している状態 */
-        .mole.up {
-            transform: translateY(0); /* 穴から飛び出させる */
-        }
-    </style>
+    <title>もぐらたたきゲーム</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>モグラたたき！</h1>
-    <div id="status">スコア: 0 | 時間: 30</div>
-    <div id="game-board">
+    <h1>もぐらたたき！</h1>
+    <div id="game-container">
+        <div class="hole" data-index="0">
+            <img src="mole.png" alt="もぐら" class="mole" id="mole-0">
         </div>
-    <button onclick="startGame()">ゲームスタート</button>
+        <div class="hole" data-index="1">
+            <img src="mole.png" alt="もぐら" class="mole" id="mole-1">
+        </div>
+        <div class="hole" data-index="2">
+            <img src="mole.png" alt="もぐら" class="mole" id="mole-2">
+        </div>
+        </div>
 
-    <script src="game.js"></script>
+    <div id="score-board">
+        <p>スコア: <span id="score">0</span></p>
+        <button id="start-button">ゲームスタート</button>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
