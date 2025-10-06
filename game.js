@@ -1,86 +1,134 @@
-// ゲームの基本設定
-const ROWS = 5;
-const COLS = 5;
-const COLORS = ['#ff6f61', '#ffc75f', '#845ec2', '#00c9a7']; // ツムの色リスト
-const board = document.getElementById('game-board');
-let grid = []; // 盤面の状態を保持する配列
+// --- 1. 定数と変数の設定 -----------------------------------------------------
 
-// --- 1. 初期化処理 -----------------------------------------------------------
+const BOARD_SIZE = 9; // 穴の総数 (3x3)
+const GAME_DURATION = 30; // ゲーム時間 (秒)
+
+let score = 0;
+let timeRemaining = GAME_DURATION;
+let gameInterval; // ゲームループ（モグラ出現）のID
+let timerInterval; // タイマーのID
+let isPlaying = false;
+
+const board = document.getElementById('game-board');
+const statusDisplay = document.getElementById('status');
+let moles = []; // すべてのモグラ要素を保持する配列
+
+// --- 2. 初期化処理 -----------------------------------------------------------
 
 /**
- * 盤面をランダムな色で初期化する
+ * ゲーム盤とモグラを初期生成する
  */
 function initializeBoard() {
-    for (let r = 0; r < ROWS; r++) {
-        grid[r] = [];
-        for (let c = 0; c < COLS; c++) {
-            // ランダムに色を選択
-            const randomColorIndex = Math.floor(Math.random() * COLORS.length);
-            grid[r][c] = randomColorIndex; 
-            
-            // DOM要素（ツム）を作成
-            const tsum = document.createElement('div');
-            tsum.className = 'tsum';
-            tsum.style.backgroundColor = COLORS[randomColorIndex];
-            
-            // 行と列のインデックスをカスタムデータ属性として保存
-            tsum.dataset.row = r;
-            tsum.dataset.col = c;
-            
-            // クリックイベントを設定
-            tsum.addEventListener('click', handleTsumClick);
-            
-            board.appendChild(tsum);
+    board.innerHTML = ''; // 既存の要素をクリア
+    moles = [];
+    for (let i = 0; i < BOARD_SIZE; i++) {
+        const hole = document.createElement('div');
+        hole.className = 'hole';
+        
+        const mole = document.createElement('div');
+        mole.className = 'mole';
+        // クリックイベントを設定 (モグラが出ているときだけ反応するように)
+        mole.addEventListener('click', whackMole);
+        
+        hole.appendChild(mole);
+        board.appendChild(hole);
+        moles.push(mole);
+    }
+}
+
+/**
+ * モグラが叩かれたときの処理
+ */
+function whackMole(event) {
+    if (!isPlaying) return;
+
+    const clickedMole = event.target;
+    
+    // 叩かれたモグラが「出現中」（upクラスを持っている）か確認
+    if (clickedMole.classList.contains('up')) {
+        score++; // スコア加算
+        clickedMole.classList.remove('up'); // モグラを隠す
+        
+        // 叩いた時の演出 (例: 色を緑に変える)
+        clickedMole.style.backgroundColor = '#4CAF50';
+        setTimeout(() => {
+            clickedMole.style.backgroundColor = '#ff5722'; // 元に戻す
+        }, 100);
+        
+        updateStatus(); // ステータス表示を更新
+    }
+}
+
+// --- 3. ゲームのメインロジック --------------------------------------------------
+
+/**
+ * ランダムなモグラを出現させる
+ */
+function popUpMole() {
+    // 現在出現中のモグラを一旦隠す
+    moles.forEach(mole => mole.classList.remove('up'));
+
+    // ランダムな穴を選ぶ
+    const randomIndex = Math.floor(Math.random() * BOARD_SIZE);
+    
+    // モグラを出現させる
+    moles[randomIndex].classList.add('up');
+}
+
+/**
+ * ステータス表示（スコアと時間）を更新する
+ */
+function updateStatus() {
+    statusDisplay.textContent = `スコア: ${score} | 時間: ${timeRemaining}`;
+}
+
+/**
+ * ゲームオーバー処理
+ */
+function gameOver() {
+    isPlaying = false;
+    clearInterval(gameInterval);
+    clearInterval(timerInterval);
+    
+    // 画面上のモグラを全て隠す
+    moles.forEach(mole => mole.classList.remove('up'));
+
+    alert(`ゲーム終了！あなたのスコアは ${score} 点です！`);
+    document.querySelector('button').disabled = false; // スタートボタンを再度有効にする
+}
+
+// --- 4. ゲーム開始とタイマー処理 ----------------------------------------------
+
+/**
+ * ゲームを開始するメイン関数
+ */
+function startGame() {
+    if (isPlaying) return;
+
+    // 状態をリセット
+    score = 0;
+    timeRemaining = GAME_DURATION;
+    isPlaying = true;
+    document.querySelector('button').disabled = true; // スタートボタンを無効化
+    
+    initializeBoard(); // 盤面を作成
+    updateStatus();
+    
+    // モグラ出現のループ（1秒〜1.5秒間隔でランダムに出現）
+    gameInterval = setInterval(popUpMole, 
+        Math.floor(Math.random() * 500) + 1000 // 1000ms〜1500ms
+    );
+    
+    // タイマー処理 (1秒ごとに時間を減らす)
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateStatus();
+        
+        if (timeRemaining <= 0) {
+            gameOver();
         }
-    }
+    }, 1000);
 }
 
-// --- 2. クリック時の処理 -----------------------------------------------------
-
-/**
- * 特定のツムとその隣接ツムの色を変える
- * @param {number} r - 行インデックス
- * @param {number} c - 列インデックス
- */
-function toggleColor(r, c) {
-    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) {
-        return; // 盤面の外なら何もしない
-    }
-
-    // 現在の色インデックスを取得
-    let currentColorIndex = grid[r][c];
-    
-    // 次の色インデックスを計算 (リストの最後に到達したら最初に戻る)
-    let nextColorIndex = (currentColorIndex + 1) % COLORS.length;
-    
-    // 盤面データを更新
-    grid[r][c] = nextColorIndex;
-    
-    // DOM要素の色を更新
-    const tsumElement = board.querySelector(`[data-row="${r}"][data-col="${c}"]`);
-    if (tsumElement) {
-        tsumElement.style.backgroundColor = COLORS[nextColorIndex];
-    }
-}
-
-/**
- * ツムがクリックされたときのイベントハンドラ
- * @param {Event} event - クリックイベント
- */
-function handleTsumClick(event) {
-    const clickedTsum = event.currentTarget;
-    const r = parseInt(clickedTsum.dataset.row);
-    const c = parseInt(clickedTsum.dataset.col);
-
-    // クリックされたツムの色を変える
-    toggleColor(r, c);
-    
-    // 上下左右のツムの色を変える
-    toggleColor(r - 1, c); // 上
-    toggleColor(r + 1, c); // 下
-    toggleColor(r, c - 1); // 左
-    toggleColor(r, c + 1); // 右
-}
-
-// --- 3. ゲーム開始 -----------------------------------------------------------
+// 最初の盤面だけ準備しておく
 initializeBoard();
