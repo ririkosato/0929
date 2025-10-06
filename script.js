@@ -1,82 +1,104 @@
-const moles = document.querySelectorAll('.mole'); // すべてのもぐら要素
-const scoreDisplay = document.getElementById('score'); // スコア表示要素
-const startButton = document.getElementById('start-button'); // スタートボタン
-let score = 0;
-let lastHoleIndex = -1; // 直前に出たもぐらの穴のインデックス
-let timeUp = false; // ゲーム終了フラグ
+const gameContainer = document.getElementById('game-container');
+// ペアにするカードの数値（ここでは1〜8を2枚ずつ計16枚）
+const cardValues = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
-// --- 1. ランダムな時間間隔を生成する関数 ---
-function randomTime(min, max) {
-    return Math.round(Math.random() * (max - min) + min);
-}
+let flippedCards = []; // 現在めくられているカードを格納
+let lockBoard = false; // 2枚めくっている間は他のカードをめくれないようにするフラグ
+let matchedPairs = 0; // 揃ったペアの数
 
-// --- 2. 次にもぐらが出る穴をランダムに選ぶ関数 ---
-function randomHole(moles) {
-    const idx = Math.floor(Math.random() * moles.length);
-    const hole = moles[idx];
-    
-    // 直前の穴と同じ穴を選ばないようにする
-    if (idx === lastHoleIndex) {
-        return randomHole(moles); 
+// 配列をシャッフルする関数（Fisher-Yatesシャッフル）
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
     }
-    
-    lastHoleIndex = idx;
-    return hole;
 }
 
-// --- 3. もぐらを飛び出させる関数 ---
-function peep() {
-    const time = randomTime(500, 1500); // 0.5秒～1.5秒間隔で出現
-    const mole = randomHole(moles);
+// カードを作成し、ゲームボードに配置する関数
+function createBoard() {
+    shuffle(cardValues); // カードの値をシャッフル
 
-    // もぐらを「up」クラスで表示
-    mole.classList.add('up');
+    cardValues.forEach(value => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.dataset.value = value; // カードの値（ペア判定用）をデータ属性に保存
+
+        // カードの表面（値が表示される側）
+        const cardFront = document.createElement('div');
+        cardFront.classList.add('card-face', 'card-front');
+        cardFront.textContent = value;
+
+        // カードの裏面（カバーされている側）
+        const cardBack = document.createElement('div');
+        cardBack.classList.add('card-face', 'card-back');
+        cardBack.textContent = '?'; // 裏面の文字
+
+        card.appendChild(cardFront);
+        card.appendChild(cardBack);
+
+        card.addEventListener('click', flipCard); // クリックイベントを設定
+        gameContainer.appendChild(card);
+    });
+}
+
+// カードをクリックした時の処理
+function flipCard() {
+    // ボードがロックされている、またはすでにめくられている場合は何もしない
+    if (lockBoard || this.classList.contains('flipped')) return;
+
+    this.classList.add('flipped'); // カードをめくる
+
+    flippedCards.push(this); // めくったカードを配列に追加
+
+    if (flippedCards.length === 2) {
+        // 2枚目のカードがめくられた
+        lockBoard = true; // ボードをロック
+        checkForMatch(); // ペアかどうかチェック
+    }
+}
+
+// ペアかどうかチェックする関数
+function checkForMatch() {
+    const [card1, card2] = flippedCards;
+    const isMatch = card1.dataset.value === card2.dataset.value;
+
+    if (isMatch) {
+        // ペアの場合
+        disableCards(card1, card2); // カードを無効化
+    } else {
+        // ペアではない場合
+        unflipCards(); // カードを裏返す
+    }
+}
+
+// ペアが揃った時の処理（カードを無効化）
+function disableCards(card1, card2) {
+    card1.classList.add('matched');
+    card2.classList.add('matched');
     
-    // 指定した時間後に隠す
+    matchedPairs++; // 揃ったペア数をインクリメント
+
+    // すべてのペアが揃ったかチェック
+    if (matchedPairs === cardValues.length / 2) {
+        setTimeout(() => alert('ゲームクリア！'), 500);
+    }
+
+    resetBoard();
+}
+
+// ペアが揃わなかった時の処理（カードを裏返す）
+function unflipCards() {
+    // しばらく待ってから裏返す（ユーザーが見えるように）
     setTimeout(() => {
-        mole.classList.remove('up');
-        // ゲームが終了していなければ、次のもぐらを出す
-        if (!timeUp) {
-            peep();
-        }
-    }, time);
+        flippedCards.forEach(card => card.classList.remove('flipped'));
+        resetBoard();
+    }, 1000); // 1秒待機
 }
 
-// --- 4. もぐらを叩いたときの処理 ---
-function whack(e) {
-    // クリックされたのが、飛び出ている（upクラスがある）もぐらか確認
-    if (!e.target.classList.contains('up')) return; 
-
-    score++;
-    scoreDisplay.textContent = score;
-    
-    // 叩かれたもぐらをすぐに隠す
-    e.target.classList.remove('up');
-
-    // 叩かれた時の画像に一時的に変える処理などをここに追加しても良い
+// 処理完了後、状態をリセットする関数
+function resetBoard() {
+    [flippedCards, lockBoard] = [[], false];
 }
 
-// --- 5. ゲームを開始する関数 ---
-function startGame() {
-    score = 0;
-    scoreDisplay.textContent = score;
-    timeUp = false;
-    startButton.disabled = true; // スタートボタンを無効化
-    
-    peep(); // もぐらの出現ループ開始
-
-    // 20秒後にゲームを終了
-    setTimeout(() => {
-        timeUp = true;
-        startButton.disabled = false; // スタートボタンを再度有効化
-        alert(`ゲーム終了！あなたのスコアは ${score} 点です！`);
-    }, 20000); // 20秒 = 20000ミリ秒
-}
-
-
-// --- 6. イベントリスナーの設定 ---
-// スタートボタンがクリックされたらゲーム開始
-startButton.addEventListener('click', startGame); 
-
-// すべてのもぐらにクリックイベントを設定
-moles.forEach(mole => mole.addEventListener('click', whack));
+// ゲーム開始
+createBoard();
