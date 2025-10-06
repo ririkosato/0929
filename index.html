@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シンプルツムツム風パズル</title>
+    <style>
+        /* ゲームのスタイル設定 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-board {
+            display: grid;
+            /* 5x5のマス目を作成 */
+            grid-template-columns: repeat(5, 60px); 
+            grid-template-rows: repeat(5, 60px);
+            gap: 5px;
+            border: 5px solid #333;
+            background-color: #ccc;
+        }
+        .tsum {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%; /* ツムを円形にする */
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 2px solid #fff;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>クリックで色が変わるパズル</h1>
+    <div id="game-board">
+        </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
